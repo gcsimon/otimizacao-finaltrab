@@ -2,45 +2,51 @@ import numpy as np
 import copy
 
 k_max = 3
+iterations = 999
 
 
-def VNS(s, k):
-    if k <= 0:
-        print("ERRO! Vizinhança", k, "não existe.")
+def VNS(solucao, num_vizinhancas):
+    print("num viz: ", num_vizinhancas)
+    if num_vizinhancas <= 0:
+        print("ERRO! Vizinhança", num_vizinhancas, "não existe.")
         return
-    
-    nova_solucao = k_vizinhanca(s, k)
-    print("nova solução: ", nova_solucao)
-    
-    valor_s = sum(s)
-    if verifica_paridade(s):
-        print("Solução gerada respeita paridade.")
-        novo_valor_s = sum(nova_solucao)
-        if novo_valor_s > valor_s:
-            print("Melhor solução encontrada: ", novo_valor_s)
-            valor_s = novo_valor_s
-        else: # Solução nova é pior que a antiga: Máximo local
-            VNS(s, max(k+1, k_max))
-    else: # Solução nova é pior que a antiga (porque não é par): Máximo local
-        VNS(s, max(k+1, k_max))
-
+    for i in range(iterations): 
+        if sum(solucao) < len(solucao):
+            nova_solucao = k_vizinhanca(solucao, num_vizinhancas)
+            print("nova solução: ", nova_solucao)
+            if verifica_paridade(nova_solucao):
+                print("Solução gerada respeita paridade.")
+                score_solucao = sum(solucao)
+                score_nova_solucao = sum(nova_solucao)
+                if score_nova_solucao > score_solucao and verifica_paridade(nova_solucao):
+                    print("Uma melhor solução foi encontrada: ", score_nova_solucao)
+                    solucao = nova_solucao
+                else:  # Solução nova é pior que a antiga: Máximo local
+                    num_vizinhancas = min(num_vizinhancas + 1, k_max)
+                    continue
+            # Solução nova é pior que a antiga (porque não é par): Máximo local
+            else:
+                num_vizinhancas = min(num_vizinhancas, k_max)
+                continue
+        else:
+            print('Solucao topzera. Todos vertices selecionados')
+            #todos os vertices foram selecionados. melhor solucao possivel
+    print("solucao final", solucao)
+    print("Valor solucao final ", sum(solucao))
 
 # Muda k vértices para gerar uma nova solução.
-def k_vizinhanca(s, k):
-    for n in range(k):
+def k_vizinhanca(solucao, num_vizinhancas):
+    
+    solucaozita = copy.deepcopy(solucao)
+    for n in range(num_vizinhancas):
         # Escolhe um vértice aleatório da solução
         vert = np.random.randint(num_vertices)
-        while s[vert] == 1 and sum(s) != len(s):
+        while solucao[vert] == 1 and sum(solucao) != len(solucao):
             vert = np.random.randint(num_vertices)
         # print("vertice escolhido: ", vert)
-        
-        # Inverte o seu valor
-        # if s[vert] == 0:
-        s[vert] = 1
-        # else:
-        #     s[vert] = 0
+        solucaozita[vert] = 1
+    return solucaozita
 
-    return s
 
 
 def verifica_paridade(solucao):
@@ -98,12 +104,12 @@ def main():
     f.close()
 
     #possivel selecao de vertices
-    possivel_solucao = np.random.choice([0, 1], size=(num_vertices))
-    while sum(possivel_solucao)%2 != 0:
-        possivel_solucao = np.random.choice([0, 1], size=(num_vertices))
-    print("possivel solucao: {}".format(possivel_solucao))
+    primeira_solucao = np.random.choice([0, 1], size=(num_vertices))
+    while not verifica_paridade(primeira_solucao):
+        primeira_solucao = np.random.choice([0, 1], size=(num_vertices))
+    print("primeira solucao: {}".format(primeira_solucao))
     melhor_solucao = 0
-    VNS(possivel_solucao, 1)
+    VNS(primeira_solucao, 1)
 
 
 if __name__ == "__main__":
