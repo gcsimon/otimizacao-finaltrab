@@ -1,7 +1,7 @@
 import numpy as np
 import copy
 
-k_max = 3
+k_max = 1
 iterations = 999
 
 
@@ -15,7 +15,6 @@ def VNS(solucao, num_vizinhancas):
             nova_solucao = k_vizinhanca(solucao, num_vizinhancas)
             print("nova solução: ", nova_solucao)
             if verifica_paridade(nova_solucao):
-                print("Solução gerada respeita paridade.")
                 score_solucao = sum(solucao)
                 score_nova_solucao = sum(nova_solucao)
                 if score_nova_solucao > score_solucao and verifica_paridade(nova_solucao):
@@ -36,16 +35,15 @@ def VNS(solucao, num_vizinhancas):
 
 # Muda k vértices para gerar uma nova solução.
 def k_vizinhanca(solucao, num_vizinhancas):
-    
-    solucaozita = copy.deepcopy(solucao)
-    for n in range(num_vizinhancas):
-        # Escolhe um vértice aleatório da solução
-        vert = np.random.randint(num_vertices)
-        while solucao[vert] == 1 and sum(solucao) != len(solucao):
-            vert = np.random.randint(num_vertices)
-        # print("vertice escolhido: ", vert)
-        solucaozita[vert] = 1
-    return solucaozita
+    solucao_vizinha_melhor = copy.deepcopy(solucao)
+    for i in range(len(solucao)):
+        vizinho = copy.deepcopy(solucao)
+        vizinho[i] = int(not bool(vizinho[i]))
+        if verifica_paridade(vizinho):
+            print('solucaozita', vizinho)
+            if sum(vizinho) > sum(solucao_vizinha_melhor):
+                solucao_vizinha_melhor = copy.deepcopy(vizinho)
+    return solucao_vizinha_melhor
 
 
 
