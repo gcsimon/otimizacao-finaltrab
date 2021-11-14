@@ -6,9 +6,10 @@ from numpy import random
 # FLAGS
 debug_prints = False
 usar_shake = True
+print_a_cada_n_iteracoes = 10
 
-max_iteracoes = 99999
-file_name = 'instancias\instancias\induced_10_22.dat'
+max_iteracoes = 999999999
+file_name = 'instancias\instancias\induced_700_73395.dat'
 
 # Implementação do VNS
 def VNS(solucao, num_vizinhancas):
@@ -32,6 +33,7 @@ def VNS(solucao, num_vizinhancas):
     solucoes_validas[0] = (copy.deepcopy(solucao))
     
     vizinhanca_atual = 1
+    print_counter = print_a_cada_n_iteracoes
     i = 0
     while i < max_iteracoes: 
         score_solucao = 0
@@ -88,6 +90,22 @@ def VNS(solucao, num_vizinhancas):
         if todas_solucoes_iguais:
             print("Convergência em", i+1, "iterações")
             break
+        
+        # Imprime o resultado parcial a cada n iterações
+        if print_counter <= 0:
+            print_counter = print_a_cada_n_iteracoes
+            solucao_parcial = np.zeros(num_vertices)
+            score_solucao_parcial = 0
+            for s in solucoes_validas:
+                score_s = sum(s)
+                if score_s > score_solucao_parcial:
+                    score_solucao_parcial = score_s
+                    solucao_parcial = s
+            print("Solução parcial:", solucao_parcial)
+            print("Valor da solução parcial ", score_solucao_parcial)
+            print("")
+        else:
+            print_counter -= 1
 
         i+=1
     
