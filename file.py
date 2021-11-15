@@ -4,20 +4,21 @@ import copy as cp
 TIME_OUT = 100000
 ITERATIONS = 10000
 BONUS = 2
-NEIGHBORS = 5
+NEIGHBORS = 3
 
 class Graph:
     def __init__(self, matrix, vertices, num_vertices):
         self.matrix = matrix
         self.vertices = vertices
         self.num_vertices = num_vertices
+        self.score = calculate_score(self.matrix, self.vertices)
     def __str__(self):
         return "Matriz:\n" + str(self.matrix) + "\nVertices:\n" + str(self.vertices)
 
 def read_file():
-    #file_name = 'instancias\instancias\induced_7_10.dat'
+    file_name = 'instancias\instancias\induced_7_10.dat'
     #file_name = 'instancias\instancias\induced_10_22.dat'
-    file_name = 'instancias\instancias\induced_50_122.dat'
+    #file_name = 'instancias\instancias\induced_50_122.dat'
 
     f = open(file_name, "r")
     primeira_linha =  f.readline()
@@ -46,6 +47,7 @@ def apply_vertice_vec(graph, original_graph, vertices):
                 graph.matrix[i][j] = 0
                 graph.matrix[j][i] = 0
     graph.vertices = vertices
+    graph.score = calculate_score(graph.matrix, graph.vertices)
 
 def add_vertice(graph, original_graph, index):
     for j in range(graph.num_vertices):
@@ -79,11 +81,12 @@ def create_solution(original_graph):
 
     return new_graph
 
-def calculate_score(matrix):
-    if(test_parity(matrix)):
-        return sum(matrix.vertices) + BONUS
-    else:
-        return sum(matrix.vertices)
+def calculate_score(matrix, vertices):
+    score = 0
+    for i in range(vertices.size):
+        score += 1 if sum(matrix[i]) % 2 == 0 else 0
+    return score
+
 
 def selectNeighbor(graph, original_graph):
     #neighbors = original_graph.num_vertices // 3
@@ -101,36 +104,39 @@ def selectNeighbor(graph, original_graph):
         else:
             remove_vertice(new_graph, index)
 
+    new_graph.score = calculate_score(new_graph.matrix, new_graph.vertices)
+
     return new_graph
 
 def lahc(original_graph):
-    solution_A = create_solution(original_graph) #s
+    solution_A = create_solution(original_graph) 
     final_solution = cp.deepcopy(solution_A)
-    score_A = calculate_score(solution_A)
     sols = []
     for i in range(original_graph.num_vertices):
-        sols.append(score_A)
+        sols.append(solution_A.score)
     i = 0
     is_solution_even = test_parity(solution_A)
     while((i < ITERATIONS or not is_solution_even) and i < TIME_OUT):
-        solution_B = selectNeighbor(solution_A, original_graph) #s*
-        score_B = calculate_score(solution_B)
+        solution_B = selectNeighbor(solution_A, original_graph)
         v = i % original_graph.num_vertices
-        if score_B >= sols[v]:
+        if solution_B.score >= sols[v]:
             solution_A = cp.deepcopy(solution_B)
             if(test_parity(solution_A)):
                 final_solution = cp.deepcopy(solution_A)
                 is_solution_even = True
-        score_A = calculate_score(solution_A)
-        sols[v] = score_A
+        sols[v] = solution_A.score
         i += 1
 
-    print("final:\n", final_solution)
-    print("final score:", calculate_score(final_solution) - BONUS)
     if(i == TIME_OUT):
         print("TIME OUT")
     if(not is_solution_even):
         print("NO SOLUTIONS FOUND")
+        print(max(sols))
+        return max(sols)
+
+    print("final:\n", final_solution)
+    print("final score:", final_solution.score)
+    print("vertices:", sum(final_solution.vertices))
     return final_solution
 
 
