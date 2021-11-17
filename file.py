@@ -1,7 +1,7 @@
 import numpy as np
 import copy as cp
 
-ITERATIONS = 1000000
+ITERATIONS = 100000
 TIME_OUT = ITERATIONS*10
 BONUS = 1
 NEIGHBORS = 1
