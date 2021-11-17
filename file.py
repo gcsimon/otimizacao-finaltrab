@@ -1,7 +1,7 @@
 import numpy as np
 import copy as cp
 
-ITERATIONS = 100000
+ITERATIONS = 10000
 TIME_OUT = ITERATIONS*10
 BONUS = 1
 NEIGHBORS = 1
@@ -18,8 +18,8 @@ class Graph:
 
 def read_file():
     #file_name = 'instancias\instancias\induced_7_10.dat'
-    #file_name = 'instancias\instancias\induced_10_22.dat'
-    file_name = 'instancias\instancias\induced_50_122.dat'
+    file_name = 'instancias\instancias\induced_10_22.dat'
+    #file_name = 'instancias\instancias\induced_50_122.dat'
 
     f = open(file_name, "r")
     primeira_linha =  f.readline()
@@ -85,10 +85,10 @@ def create_solution(original_graph):
 
 def calculate_score(graph):
     score = 0
-    #for i in range(graph.num_vertices):
-    #    score += 1 if sum(graph.matrix[i]) % 2 == 0 else 0
-    #return score
-    return sum(graph.vertices) + (BONUS if graph.is_even else 0)
+    for i in range(graph.num_vertices):
+        score += 1 if sum(graph.matrix[i]) % 2 == 0 else 0
+    return score + sum(graph.vertices)
+    #return sum(graph.vertices) + (BONUS if graph.is_even else 0)
 
 def selectNeighbor(graph, original_graph):
     #neighbors = original_graph.num_vertices // 3
@@ -123,7 +123,7 @@ def lahc(original_graph):
         v = i % original_graph.num_vertices
         if solution_B.score >= sols[v]:
             solution_A = cp.deepcopy(solution_B)
-            if(solution_A.is_even):
+            if(solution_A.is_even and sum(solution_A.vertices) > sum(final_solution.vertices)):
                 final_solution = cp.deepcopy(solution_A)
                 print("ultima solucao: ", sum(final_solution.vertices))
         sols[v] = solution_A.score
