@@ -6,10 +6,10 @@ from numpy import random
 # FLAGS
 debug_prints = False
 usar_shake = True
+vnd = True
 print_a_cada_n_iteracoes = 10
-
 max_iteracoes = 999999999
-file_name = 'instancias\instancias\induced_700_73395.dat'
+file_name = 'instancias\instancias\induced_50_122.dat'
 
 # Implementação do VNS
 def VNS(solucao, num_vizinhancas):
@@ -35,12 +35,18 @@ def VNS(solucao, num_vizinhancas):
     vizinhanca_atual = 1
     print_counter = print_a_cada_n_iteracoes
     i = 0
+    melhor_solucao = copy.deepcopy(solucao)
+    maior_score = sum(melhor_solucao)
+    multiplicador_shake = 0
     while i < max_iteracoes: 
         score_solucao = 0
         for s in solucoes_validas:
             score_s = sum(s)
             if score_s > score_solucao:
                 score_solucao = score_s
+                if score_solucao > maior_score:
+                    maior_score = score_solucao
+                    melhor_solucao = s
         
         if debug_prints:
             if i > 0:
@@ -53,7 +59,7 @@ def VNS(solucao, num_vizinhancas):
         score_nova_solucao = 0
         if nova_solucao is None:
             nova_solucao = solucao
-            score_nova_solucao = sum(nova_solucao)
+            score_nova_solucao = 0
         else: # Solução é válida
             score_nova_solucao = sum(nova_solucao)
             if score_nova_solucao == num_vertices: # Todos os vertices foram selecionados. melhor solucao possivel
@@ -70,14 +76,18 @@ def VNS(solucao, num_vizinhancas):
                 print("score: ", score_nova_solucao)
                 print("k: ", vizinhanca_atual)
                 print("i: ", i)
-            if usar_shake:  solucao = shake(nova_solucao, vizinhanca_atual)
+            if vizinhanca_atual == 1:
+                multiplicador_shake = max(multiplicador_shake-1, 1)
+            if usar_shake:  solucao = shake(nova_solucao, vizinhanca_atual, multiplicador_shake)
             else:   solucao = nova_solucao
             vizinhanca_atual = max(vizinhanca_atual-1, 1)
             if debug_prints:
                 print("diminuindo k para:", vizinhanca_atual)
         else:  # Todos vizinhos são piores: Máximo local. Aumentar k para tentar sair
+            if vizinhanca_atual == 3: # Caso continue preso em um máximo local, aumenta ainda mais o shake
+                multiplicador_shake = min(multiplicador_shake+1, num_vertices)
             vizinhanca_atual = min(vizinhanca_atual+1, num_vizinhancas)
-            if usar_shake:  solucao = shake(nova_solucao, vizinhanca_atual)
+            if usar_shake:  solucao = shake(nova_solucao, vizinhanca_atual, multiplicador_shake)
             if debug_prints:
                 print("Nenhuma melhor solução. Máximo local: ", score_solucao)
                 print("Aumentando k para:", vizinhanca_atual)
@@ -87,22 +97,17 @@ def VNS(solucao, num_vizinhancas):
         for soluc in solucoes_validas:
             if not (soluc == solucoes_validas[0]).all():
                 todas_solucoes_iguais = False
-        if todas_solucoes_iguais:
+        if todas_solucoes_iguais and vnd:
             print("Convergência em", i+1, "iterações")
             break
         
         # Imprime o resultado parcial a cada n iterações
         if print_counter <= 0:
             print_counter = print_a_cada_n_iteracoes
-            solucao_parcial = np.zeros(num_vertices)
-            score_solucao_parcial = 0
-            for s in solucoes_validas:
-                score_s = sum(s)
-                if score_s > score_solucao_parcial:
-                    score_solucao_parcial = score_s
-                    solucao_parcial = s
-            print("Solução parcial:", solucao_parcial)
-            print("Valor da solução parcial ", score_solucao_parcial)
+            print("Solução parcial:", melhor_solucao)
+            print("Valor da solução parcial:", maior_score)
+            print("Vizinhança atual:", vizinhanca_atual)
+            print("multiplicador_shake:", multiplicador_shake)
             print("")
         else:
             print_counter -= 1
@@ -114,24 +119,15 @@ def VNS(solucao, num_vizinhancas):
     if i == max_iteracoes:
         print("Timeout após", i, "iterações.")
     
-    # Encontra melhor solução entre as vizinhanças
-    solucao_final = np.zeros(num_vertices)
-    score_solucao_final = 0
-    for s in solucoes_validas:
-        score_s = sum(s)
-        if score_s > score_solucao_final:
-            score_solucao_final = score_s
-            solucao_final = s
-    print("Solução final:", solucao_final)
-    print("Valor da solução final ", score_solucao_final)
-
+    print("Solução final:", melhor_solucao)
+    print("Valor da solução final ", maior_score)
 
 # Percorre todos os vizinhos e retorna o vizinho VÁLIDO (respeita paridade) com maior número de vértices. Retorna None
 # caso não haja vizinho maior válido.
 # Complexidade O(N^vizinhanca)
 def get_melhor_vizinho(solucao, vizinhanca):
     if debug_prints:
-        print("Gerando", num_vertices*vizinhanca, "vizinhos na vizinhança", vizinhanca, "...")
+        print("Gerando", num_vertices**vizinhanca, "vizinhos na vizinhança", vizinhanca, "...")
     solucao_vizinha_melhor = copy.deepcopy(solucao)
     x = 0
     y = 0
@@ -143,6 +139,7 @@ def get_melhor_vizinho(solucao, vizinhanca):
 
     while x < num_vertices:
         while y < num_vertices:
+            z = 0
             while z < num_vertices:
                 if (x==y or x==z or y==z) and vizinhanca==3: # Garante que não altera menos que 3 vértices
                     z+=1
@@ -164,7 +161,6 @@ def get_melhor_vizinho(solucao, vizinhanca):
                 z+=1
             y+=1
         x+=1
-    
     if not verifica_paridade(solucao_vizinha_melhor):
         return None
     return solucao_vizinha_melhor
@@ -172,9 +168,9 @@ def get_melhor_vizinho(solucao, vizinhanca):
 
 # Dada uma solução e um índice de vizinhança, dá vizinhanca passos aleatórios para soluções vizinhas (não
 # necessariamente válidas). 
-def shake(solucao, vizinhanca):
+def shake(solucao, vizinhanca, multiplicador_shake):
     solucao_shake = copy.deepcopy(solucao)
-    for i in range(vizinhanca): # Dá vizinhanca passos para vizinhos
+    for i in range(vizinhanca*multiplicador_shake): # Dá vizinhanca passos para vizinhos
         vertices_selecionados = []
         # Seleciona vizinhanca vertices para serem invertidos, sem repetir
         for j in range(vizinhanca):
@@ -203,7 +199,7 @@ def vizinho_valido_aleatorio(solucao, vizinhanca):
         print("Escolhendo vizinho aleatório! vizinhança: ", vizinhanca)
     solucao_aleatoria = copy.deepcopy(solucao)
     if debug_prints:
-        print("Gerando", num_vertices*vizinhanca_atual, "vizinhos na vizinhança", vizinhanca_atual, "...")
+        print("Gerando", num_vertices**vizinhanca_atual, "vizinhos na vizinhança", vizinhanca_atual, "...")
     x = 0
     y = 0
     z = 0
@@ -217,6 +213,7 @@ def vizinho_valido_aleatorio(solucao, vizinhanca):
         vizinhos_validos.append(solucao_aleatoria)
     while x < num_vertices:
         while y < num_vertices:
+            z = 0
             while z < num_vertices:
                 if (x==y or x==z or y==z) and vizinhanca_atual==3: # Garante que não altera menos que 3 vértices
                     z+=1
