@@ -1,7 +1,7 @@
 import numpy as np
 import copy as cp
 
-ITERATIONS = 10000
+ITERATIONS = 100000
 TIME_OUT = ITERATIONS*10
 BONUS = 1
 NEIGHBORS = 1
@@ -18,8 +18,9 @@ class Graph:
 
 def read_file():
     #file_name = 'instancias\instancias\induced_7_10.dat'
-    file_name = 'instancias\instancias\induced_10_22.dat'
+    #file_name = 'instancias\instancias\induced_10_22.dat'
     #file_name = 'instancias\instancias\induced_50_122.dat'
+    file_name = 'instancias\instancias\induced_50_612.dat'
 
     f = open(file_name, "r")
     primeira_linha =  f.readline()
@@ -87,7 +88,8 @@ def calculate_score(graph):
     score = 0
     for i in range(graph.num_vertices):
         score += 1 if sum(graph.matrix[i]) % 2 == 0 else 0
-    return score + sum(graph.vertices)
+    num_vertices = sum(graph.vertices)
+    return score // num_vertices + sum(graph.vertices)
     #return sum(graph.vertices) + (BONUS if graph.is_even else 0)
 
 def selectNeighbor(graph, original_graph):
